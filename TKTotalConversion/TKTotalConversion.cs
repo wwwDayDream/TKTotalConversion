@@ -5,7 +5,7 @@ using HarmonyLib;
 
 namespace TKTotalConversion;
 
-[ContentWarningPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_VERSION, true)]
+[ContentWarningPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_VERSION, false)]
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 public class TKTotalConversion : BaseUnityPlugin {
     public static TKTotalConversion Instance { get; private set; } = null!;
