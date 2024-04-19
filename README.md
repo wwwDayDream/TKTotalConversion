@@ -6,3 +6,7 @@
 ![Thunderstore Version](https://img.shields.io/thunderstore/v/www_Day_Dream/TKTotalConversion?style=plastic&logo=thunderstore)
 </div>
 Bring Battle Royale to your viewers with Team Kill: Total Conversion!
+
+
+### Credits & Attributions
+"VN-1 Laser Rifle" is adapted from [VN-1 Infantry Rifle](https://skfb.ly/oFoHB) by captain_tronix and is licensed under [Creative Commons Attribution](http://creativecommons.org/licenses/by/4.0/).
