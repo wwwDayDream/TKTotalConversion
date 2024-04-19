@@ -7,7 +7,7 @@ repository = "https://thunderstore.io"
 [package]
 namespace = "www_Day_Dream"
 name = "TKTotalConversion"
-description = "A mod for Content Warning."
+description = "Bring Battle Royale to your viewers with Team Kill: Total Conversion!"
 websiteUrl = "https://github.com/wwwDayDream/TKTotalConversion"
 containsNsfwContent = false
 [package.dependencies]
