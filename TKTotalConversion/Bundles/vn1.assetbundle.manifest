@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 773625237
+CRC: 3637730485
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 82d1cf2cf3674fe680f79be9c57bf533
+    Hash: 828d491dd2467eb796529db4150a5e45
   TypeTreeHash:
     serializedVersion: 2
     Hash: 11c99189e20b191245226e8f9a5789ad
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 82d1cf2cf3674fe680f79be9c57bf533
+    Hash: 828d491dd2467eb796529db4150a5e45
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -95,6 +95,8 @@ ClassTypes:
 SerializeReferenceClassIdentifiers:
 - AssemblyName: Assembly-CSharp
   ClassName: Emote
+- AssemblyName: Assembly-CSharp
+  ClassName: ItemKeyTooltip
 - AssemblyName: Assembly-CSharp
   ClassName: SFX_Settings
 - AssemblyName: Unity.RenderPipelines.Universal.Runtime
