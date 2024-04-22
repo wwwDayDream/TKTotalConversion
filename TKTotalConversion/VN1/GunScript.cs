@@ -6,6 +6,7 @@ using Photon.Pun;
 using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Serialization;
 using Zorro.Core.Serizalization;
@@ -23,19 +24,19 @@ public class Scope : MonoBehaviour {
     public MeshRenderer CameraScreen;
 }
 
-public class GunData : ItemDataEntry {
-    public 
+public abstract class GunData : ItemDataEntry {
+    public int ShotsFired { get; set; } = 0;
     public override void Serialize(BinarySerializer binarySerializer)
     {
-        
+        binarySerializer.WriteInt(ShotsFired);
     }
 
     public override void Deserialize(BinaryDeserializer binaryDeserializer)
     {
-        
+        ShotsFired = binaryDeserializer.ReadInt();
     }
 }
-public class Gun : ItemInstanceBehaviour {
+public abstract class Gun<TData> : ItemInstanceBehaviour where TData : GunData, new() {
     public GameObject BulletPrefab;
     public Transform BulletSpawnpoint;
     public ChargeDisplay ChargeDisplay;
@@ -46,10 +47,13 @@ public class Gun : ItemInstanceBehaviour {
     
     public override void ConfigItem(ItemInstanceData data, PhotonView playerView)
     {
-        
-        
         itemInstance.onItemEquipped.AddListener(OnItemEquipped);
         itemInstance.onUnequip.AddListener(OnItemUnequipped);
+
+        if (data.TryGetEntry<TData>(out var gunData)) return;
+        
+        gunData = new TData();
+        data.AddDataEntry(gunData);
     }
 
     private void OnItemEquipped(Player byPlayer)
@@ -69,7 +73,10 @@ public class Gun : ItemInstanceBehaviour {
     }
 }
 
-public class VN1Rifle : ItemInstanceBehaviour {
+public class VN1Data : GunData {
+    
+}
+public class VN1Rifle : Gun<VN1Data> {
     public GameObject BulletProjectile;
     public Transform BarrelTip;
     public Transform[] Charges;
