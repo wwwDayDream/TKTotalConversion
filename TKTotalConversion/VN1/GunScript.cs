@@ -7,10 +7,67 @@ using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Serialization;
 using Zorro.Core.Serizalization;
 using Random = UnityEngine.Random;
 
 namespace TKTotalConversion.VN1;
+
+public class ChargeDisplay : MonoBehaviour {
+    public Transform[] Charges;
+    public SFX_PlayOneShot ChargeSFX;
+}
+
+public class Scope : MonoBehaviour {
+    public Camera Camera;
+    public MeshRenderer CameraScreen;
+}
+
+public class GunData : ItemDataEntry {
+    public 
+    public override void Serialize(BinarySerializer binarySerializer)
+    {
+        
+    }
+
+    public override void Deserialize(BinaryDeserializer binaryDeserializer)
+    {
+        
+    }
+}
+public class Gun : ItemInstanceBehaviour {
+    public GameObject BulletPrefab;
+    public Transform BulletSpawnpoint;
+    public ChargeDisplay ChargeDisplay;
+    public Scope WeaponScope;
+
+    public GameObject[] EnabledWhileEquipped; 
+    public GameObject[] DisabledWhileEquipped;
+    
+    public override void ConfigItem(ItemInstanceData data, PhotonView playerView)
+    {
+        
+        
+        itemInstance.onItemEquipped.AddListener(OnItemEquipped);
+        itemInstance.onUnequip.AddListener(OnItemUnequipped);
+    }
+
+    private void OnItemEquipped(Player byPlayer)
+    {
+        foreach (var o in EnabledWhileEquipped)
+            o.SetActive(true);
+        foreach (var o in DisabledWhileEquipped)
+            o.SetActive(false);
+    }
+
+    private void OnItemUnequipped(Player byPlayer)
+    {
+        foreach (var o in EnabledWhileEquipped)
+            o.SetActive(false);
+        foreach (var o in DisabledWhileEquipped)
+            o.SetActive(true);
+    }
+}
 
 public class VN1Rifle : ItemInstanceBehaviour {
     public GameObject BulletProjectile;
