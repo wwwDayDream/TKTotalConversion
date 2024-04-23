@@ -1,14 +1,12 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using Photon.Pun;
-using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace TKTotalConversion.Patches;
+namespace TKTotalConversion.Internal.Patches;
 
 [HarmonyPatch(typeof(DiveBellParent))]
 public class DiveBellParentPatch {

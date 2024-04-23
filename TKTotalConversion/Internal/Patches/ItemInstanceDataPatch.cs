@@ -2,7 +2,7 @@ using System;
 using HarmonyLib;
 using TKTotalConversion.VN1;
 
-namespace TKTotalConversion.Patches;
+namespace TKTotalConversion.Internal.Patches;
 
 [HarmonyPatch(typeof(ItemInstanceData))]
 internal class ItemInstanceDataPatch {

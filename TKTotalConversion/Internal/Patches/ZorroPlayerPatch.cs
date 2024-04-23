@@ -3,10 +3,16 @@ using BepInEx;
 using HarmonyLib;
 using UnityEngine;
 
-namespace TKTotalConversion.Patches;
+namespace TKTotalConversion.Internal.Patches;
 
 [HarmonyPatch(typeof(Player))]
 internal class ZorroPlayerPatch {
+    [HarmonyPatch(nameof(Player.Awake))]
+    [HarmonyPostfix]
+    private static void InitializePlayerUpgradables(Player __instance)
+    {
+        TKTotalConversion.Logger.LogDebug($"Initializing Upgradables!");
+    }
     [HarmonyPatch(nameof(Player.Update))]
     [HarmonyPostfix]
     private static void GiveGun(Player __instance)

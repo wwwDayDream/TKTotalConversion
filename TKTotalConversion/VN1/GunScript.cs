@@ -3,14 +3,184 @@ using System.Linq;
 using BepInEx;
 using HarmonyLib;
 using Photon.Pun;
+using TKTotalConversion.Internal;
 using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.Serialization;
 using Zorro.Core.Serizalization;
 using Random = UnityEngine.Random;
 
 namespace TKTotalConversion.VN1;
+
+public abstract class GunData : ItemDataEntry {
+    public int ShotsRemaining;
+    
+    public override void Serialize(BinarySerializer binarySerializer)
+    {
+        binarySerializer.WriteInt(ShotsRemaining);
+    }
+
+    public override void Deserialize(BinaryDeserializer binaryDeserializer)
+    {
+        ShotsRemaining = binaryDeserializer.ReadInt();
+    }
+}
+public abstract class Gun<TGunData> : ItemInstanceBehaviour where TGunData : GunData, new() {
+    public GameObject BulletPrefab;
+    public GameObject[] EnableOnEquip;
+    public GameObject[] EnableOnUnequip;
+    public TGunData Data = null!;
+
+    public int ShotsRemaining {
+        get => Data.ShotsRemaining;
+        set
+        {
+            if (!isControlledByMe) return;
+            var shots = Data.ShotsRemaining;
+            Data.ShotsRemaining = Math.Max(value, 0);
+            if (shots != Data.ShotsRemaining) Data.SetDirty();
+        }
+    }
+    
+    public bool isControlledByMe => isHeldByMe || (!isHeld && PhotonNetwork.IsMasterClient); 
+    public override void ConfigItem(ItemInstanceData data, PhotonView playerView)
+    {
+        if (!data.TryGetEntry(out Data))
+            Data = new TGunData();
+        
+        itemInstance.onItemEquipped.AddListener(_ => EquipState(true));
+        itemInstance.onUnequip.AddListener(_ => EquipState(false));
+        
+        itemInstance.RegisterRPC(ItemRPC.RPC0, RPCA_Fire);
+    }
+    protected bool TryCallFire(Vector3 position, Vector3 forward)
+    {
+        if (ShotsRemaining == 0) return false;
+        ShotsRemaining--;
+        
+        var serializer = new BinarySerializer();
+        serializer.WriteFloat3(position);
+        serializer.WriteFloat3(forward);
+        itemInstance.CallRPC(ItemRPC.RPC0, serializer);
+        return true;
+    }
+    private void RPCA_Fire(BinaryDeserializer obj)
+    {
+        var position = (Vector3)obj.ReadFloat3();
+        var direction = (Vector3)obj.ReadFloat3();
+
+        var projectile = Instantiate(BulletPrefab, position, Quaternion.LookRotation(direction));
+        OnFire(projectile);
+    }
+    protected abstract void OnFire(GameObject projectile);
+
+    private void EquipState(bool equipped)
+    {
+        foreach (var o in EnableOnEquip)
+            o.SetActive(equipped);
+        foreach (var o in EnableOnUnequip)
+            o.SetActive(!equipped);
+    }
+}
+
+public class NewRifleData : GunData {
+    public enum GunFireMode { Semi, Auto, Burst }
+    public GunFireMode FireMode;
+    
+    public override void Serialize(BinarySerializer binarySerializer)
+    {
+        base.Serialize(binarySerializer);
+        binarySerializer.WriteInt((int)FireMode);
+    }
+
+    public override void Deserialize(BinaryDeserializer binaryDeserializer)
+    {
+        base.Deserialize(binaryDeserializer);
+        FireMode = (GunFireMode)binaryDeserializer.ReadInt();
+    }
+}
+public class NewRifle : Gun<NewRifleData> {
+    public Transform BarrelTip;
+    [DoNotSerialize] public float TimeSinceLastFired;
+    [DoNotSerialize] public int ConcurrentShotCounter;
+
+    public NewRifleData.GunFireMode FireMode {
+        get => Data.FireMode;
+        set
+        {
+            if (!isControlledByMe) return;
+            var prev = Data.FireMode;
+            Data.FireMode = value;
+            if (Data.FireMode == prev) return;
+            Data.SetDirty();
+        }
+    }
+    
+    public override void ConfigItem(ItemInstanceData data, PhotonView playerView)
+    {
+        base.ConfigItem(data, playerView);
+        TimeSinceLastFired = 0f;
+        ConcurrentShotCounter = 0;
+    }
+
+    private void Update()
+    { 
+        if (!isControlledByMe) return;
+        var playerWeaponSettings = AssemblyInjections.TKTC_PlayerUpgradables.Get(Player.localPlayer).WeaponStatistics;
+        TimeSinceLastFired += Time.deltaTime;
+        
+        if (isHeldByMe && !Player.localPlayer.input.clickIsPressed)
+        {
+            ConcurrentShotCounter = 0;
+        }
+        
+        var canFire = TimeSinceLastFired >= 1f / playerWeaponSettings.FireRate &&
+            isHeldByMe && 
+            Player.localPlayer.input.clickIsPressed &&
+            FireMode switch {
+                NewRifleData.GunFireMode.Semi => ConcurrentShotCounter < 1,
+                NewRifleData.GunFireMode.Burst => ConcurrentShotCounter < 3,
+                NewRifleData.GunFireMode.Auto => true,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+        if (!canFire) return;
+
+        ConcurrentShotCounter++;
+        TimeSinceLastFired = 0f;
+        
+        if (TryCallFire(BarrelTip.position, BarrelTip.forward))
+        {
+            TKTotalConversion.Logger.LogDebug("Successfully fired bullet!");
+        }
+    }
+
+    protected override void OnFire(GameObject projectile)
+    {
+        var projectileScript = projectile.GetComponent<Projectile>();
+        Traverse.Create(projectile).Method(nameof(Projectile.Ignore), [ typeof(Transform), typeof(float) ])
+            .GetValue( [ itemInstance.transform.root, 1f ]);
+        // AccessTools.Method(typeof(Projectile), nameof(Projectile.Ignore))
+        //     .Invoke(projectileScript, [ itemInstance.transform.root, 1f ]);
+        projectileScript.velocity = 100f;
+        projectileScript.damage = 0;
+        projectileScript.force = 0;
+        projectileScript.fall = 0f;
+        projectileScript.GetComponent<AddGamefeel>().perlinAmount = 2;
+        projectileScript.GetComponent<AddGamefeel>().range = 20;
+
+        projectileScript.hitAction += hit =>
+        {
+            projectile.GetComponent<AddGamefeel>().AddPerlin();
+            if (!isControlledByMe) return;
+            var player = hit.collider.GetComponentInParent<Player>();
+            if (player == null || !player) return;
+            player.CallTakeDamageAndAddForceAndFallWithFallof(Random.Range(10, 25), projectileScript.vel / (player.ai ? 0.1f : 10f), 0.1f, hit.point, 1f);
+        };
+    }
+}
 
 public class VN1Rifle : ItemInstanceBehaviour {
     public GameObject BulletProjectile;
@@ -63,15 +233,6 @@ public class VN1Rifle : ItemInstanceBehaviour {
 
     private void Update()
     {
-        var amt = UnityInput.Current.GetKeyUp(KeyCode.UpArrow) ? 1f : UnityInput.Current.GetKeyUp(KeyCode.DownArrow) ? -1f : 0f;
-        if (amt != 0f)
-            if (UnityInput.Current.GetKey(KeyCode.LeftShift))
-                itemInstance.item.alternativeHoldPos.y += Time.deltaTime * 10f * amt;
-            else if (UnityInput.Current.GetKey(KeyCode.LeftControl))
-                itemInstance.item.alternativeHoldPos.z += Time.deltaTime * 10f * amt;
-            else
-                itemInstance.item.alternativeHoldPos.x += Time.deltaTime * 10f * amt;
-        
         UpdateCharges();
 
         HandleFlashlight();
@@ -119,7 +280,6 @@ public class VN1Rifle : ItemInstanceBehaviour {
             lastFlashlightCharge = data.FlashlightBattery;
         }
     }
-
     private void TryHandleZoom()
     {
         if (GlobalInputHandler.CanTakeInput() && Player.localPlayer.input.aimIsPressed)
@@ -131,7 +291,6 @@ public class VN1Rifle : ItemInstanceBehaviour {
         if (!Mathf.Approximately(Camera.fieldOfView, desiredFov))
             Camera.fieldOfView = Mathf.MoveTowards(Camera.fieldOfView, desiredFov, 100 * Time.deltaTime);
     }
-
     private void EnableCameraView(bool enable = true)
     {
         if (Camera.targetTexture == null)
@@ -144,7 +303,6 @@ public class VN1Rifle : ItemInstanceBehaviour {
         Camera.gameObject.SetActive(enable);
         CameraScreen.gameObject.SetActive(Camera is { enabled: true, gameObject.activeSelf: true });
     }
-    
     private void TryShoot()
     {
         if (!Player.localPlayer.input.clickIsPressed || timer > 0f || data.Charge <= 0) return;

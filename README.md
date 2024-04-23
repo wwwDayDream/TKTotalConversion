@@ -13,3 +13,4 @@ Brief explanations can be found [here](https://gist.github.com/kn9ts/cbe95340d29
 
 ### Credits & Attributions
 "VN-1 Laser Rifle" is adapted from [VN-1 Infantry Rifle](https://skfb.ly/oFoHB) by captain_tronix and is licensed under [Creative Commons Attribution](http://creativecommons.org/licenses/by/4.0/).
+"Laser Pistol" is adapted from [Laser Gun](https://skfb.ly/6TYX6) by Delincoter and is licensed under [Creative Commons Attribution](http://creativecommons.org/licenses/by/4.0/).

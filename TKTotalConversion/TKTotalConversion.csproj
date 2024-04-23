@@ -46,6 +46,7 @@
         <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" PrivateAssets="all"/>
         <PackageReference Include="UnityEngine.Modules" Version="2022.3.10" PrivateAssets="all" IncludeAssets="compile"/>
         <PackageReference Include="MinVer" Version="4.*" PrivateAssets="all"/>
+        <PackageReference Include="CessilCellsCeaChells" Version="0.1.4" PrivateAssets="all"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
@@ -57,10 +58,8 @@
         <PackageReference Include="ContentWarning.GameLibs.Steam" Version="*-*" Publicize="true" PrivateAssets="all"/>
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="Bundles\" />
-    </ItemGroup>
-    <ItemGroup>
-      <EmbeddedResource Include="Bundles\vn1.assetbundle" />
+        <EmbeddedResource Include="Internal\Bundles\vn1.assetbundle" />
+        <Folder Include="Internal\Bundles\" />
     </ItemGroup>
     
     <!-- Copy output files -->

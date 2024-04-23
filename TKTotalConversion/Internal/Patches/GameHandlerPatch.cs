@@ -3,7 +3,7 @@ using System.Linq;
 using HarmonyLib;
 using Zorro.Core;
 
-namespace TKTotalConversion.Patches;
+namespace TKTotalConversion.Internal.Patches;
 
 [HarmonyPatch(typeof(GameHandler))]
 internal class GameHandlerPatch {

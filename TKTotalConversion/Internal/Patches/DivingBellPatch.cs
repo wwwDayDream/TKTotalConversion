@@ -1,12 +1,6 @@
-using System;
-using CurvedUI;
 using HarmonyLib;
-using Photon.Pun;
-using pworld.Scripts.Extensions;
-using UnityEngine;
-using Zorro.Core;
 
-namespace TKTotalConversion.Patches;
+namespace TKTotalConversion.Internal.Patches;
 
 [HarmonyPatch(typeof(DivingBell))]
 public class DivingBellPatch {

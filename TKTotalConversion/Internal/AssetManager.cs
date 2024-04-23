@@ -1,9 +1,9 @@
 using UnityEngine;
 
-namespace TKTotalConversion;
+namespace TKTotalConversion.Internal;
 
 internal static class AssetManager {
-    private const string VN1BundleName = "Bundles.vn1.assetbundle";
+    private const string VN1BundleName = "Internal.Bundles.vn1.assetbundle";
     private const string VN1RifleAssetName = "Assets/TKTC/VN1Rifle.asset";
 
     private static AssetBundle? vn1Bundle;
